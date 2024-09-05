@@ -97,7 +97,7 @@ INSERT equipamento (n_serie, placa, tipo, modelo) VALUES
 ('2828', '292', 'Desktop', 'Montada'),
 ('1393', '291', 'Notebook', 'Inspiron 15');
 INSERT equipamento (tipo, modelo) VAlUES
-('8272, '232', 'Multifuncional a laser', 'HP M1132'),
+('8272', '232', 'Multifuncional a laser', 'HP M1132'),
 ('37991', '2873', 'Multifuncional a laser', 'Brother 2540'),
 ('Fotográfica a jato de tinta', 'Epson L805'),
 ('Multifuncional a laser', 'HP M125a'),
@@ -306,10 +306,26 @@ e saber os descarte de envios de equipamentos, que se refere a: caso um equipame
 Em outras palavras, na tabela de envio de equipamentos importa-se somente o último envio dela, mas é importante saber os outros possíveis envios anteriores para outras lojas, ou até mesmo para a própria loja.*/
 DELIMITER &&
 CREATE TRIGGER trg_status_envio AFTER INSERT
-ON equipamento
+ON envio_equipamento
 FOR EACH ROW 
 BEGIN
-	SET NEW.envio = 'Sim';
+	DECLARE cont INT;
+
+	SELECT COUNT (num_serie) INTO cont
+    FROM equipamento;
+    
+    IF cont
+    
+	UPDATE equipamento SET NEW.envio = 'Sim' WHERE num_serie = NEW.num_serie;
+END&&
+DELIMITER ;
+
+DELIMITER &&
+CREATE TRIGGER trg_status_envio AFTER INSERT
+ON envio_equipamento	
+FOR EACH ROW 
+BEGIN
+	UPDATE equipamento SET NEW.envio = 'Sim' WHERE num_serie = NEW.num_serie;
 END&&
 DELIMITER ;
 
