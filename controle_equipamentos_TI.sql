@@ -20,6 +20,7 @@ CREATE TABLE equipamento (
      placa INT UNIQUE,
 	 tipo VARCHAR(30) NOT NULL,
      modelo VARCHAR(30) NOT NULL,
+     origem VARCHAR(40) NOT NULL, -- Loja
      enviado ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Não' -- Será implementado futuramente, em que, após o INSERT EM 'envio_equipamento', acionará uma TRIGGER que dará um UPDATE aqui.
 ) ENGINE=InnoDB; -- Engenharia padrão mais recente que possibilita maior segurança e otimização comparada ao MyISAM. 
 
@@ -239,7 +240,7 @@ CREATE TABLE log_envios_descartados_equipamentos (
 	INDEX idx_fk_equipamento (fk_equipamento),
     INDEX idx_fk_loja (fk_loja),
     
-    CONSTRAINT pk_envio_equipamento_descarte FOREIGN KEY (fk_equipamento) REFERENCES equipamento(pk_equipamento) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT pk_envio_equipamento_descarte FOREIGN KEY (fk_num_serie) REFERENCES equipamento(pk_equipamento) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT pk_envio_loja_descarte FOREIGN KEY (fk_loja) REFERENCES loja(pk_loja) ON UPDATE CASCADE ON DELETE CASCADE
 )ENGINE=InnoDB;
 
@@ -305,18 +306,13 @@ SHOW GRANTS FOR 'auxiliar01_ti'@'%';
 e saber os descarte de envios de equipamentos, que se refere a: caso um equipamento seja devolvido de uma loja X, o usuário deverá deletar o envio de equipamento, esse dado será armazenado na tabela de log para isso.
 Em outras palavras, na tabela de envio de equipamentos importa-se somente o último envio dela, mas é importante saber os outros possíveis envios anteriores para outras lojas, ou até mesmo para a própria loja.*/
 DELIMITER &&
-CREATE TRIGGER trg_status_envio AFTER INSERT
+CREATE TRIGGER trg_status_envio BEFORE INSERT -- arrumar ainda, antes de inserir, delete os que forem igauis cahve composta
 ON envio_equipamento
 FOR EACH ROW 
 BEGIN
-	DECLARE cont INT;
-
-	SELECT COUNT (num_serie) INTO cont
-    FROM equipamento;
-    
-    IF cont
-    
-	UPDATE equipamento SET NEW.envio = 'Sim' WHERE num_serie = NEW.num_serie;
+	SET SQL_SAFE_UPDATES = 0;
+	DELETE FROM envio_equipamento WHERE fk_num_serie = NEW.num_serie;
+	SET SQL_SAFE_UPDATES = 1; -- TESTE
 END&&
 DELIMITER ;
 
@@ -339,7 +335,7 @@ END&&
 DELIMITER ;
 
 DELIMITER &&
-CREATE TRIGGER trg_descarte_envio BEFORE DELETE
+CREATE TRIGGER trg_descarte_envio BEFORE DELETE -- MUDAR TRIGGER PARA INSERIR 
 ON envio_equipamento
 FOR EACH ROW
 BEGIN
