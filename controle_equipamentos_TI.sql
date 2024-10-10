@@ -20,7 +20,7 @@ CREATE TABLE equipamento (
      placa INT UNIQUE,
 	 tipo VARCHAR(30) NOT NULL,
      modelo VARCHAR(30) NOT NULL,
-     origem VARCHAR(40) NOT NULL, -- Loja
+     localizacao VARCHAR(40) NOT NULL, -- Loja
      enviado ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Não' -- Será implementado futuramente, em que, após o INSERT EM 'envio_equipamento', acionará uma TRIGGER que dará um UPDATE aqui.
 ) ENGINE=InnoDB; -- Engenharia padrão mais recente que possibilita maior segurança e otimização comparada ao MyISAM. 
 
@@ -168,7 +168,7 @@ SELECT * FROM envio_equipamento;
 
 -- Criando uma VIEW detalhada, em que há os atributos modelo e tipo advindos de 'equipamento', para o envio de equipamento, que será usada para listar os dados de 'Outros_EquipamentosDAO', no Java.
 CREATE VIEW view_equipamento_envio_detalhado AS (
-	SELECT eq.fk_equipamento, q.tipo, q.modelo, eq.fk_loja, l.gerente, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.observacao
+	SELECT eq.fk_equipamento, q.tipo, q.modelo, e.localizacao, eq.fk_loja AS destino, l.gerente, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.observacao
     FROM envio_equipamento eq
     INNER JOIN equipamento q
     ON eq.fk_equipamento = q.pk_equipamento
@@ -309,7 +309,8 @@ DELIMITER &&
 CREATE TRIGGER trg_status_envio BEFORE INSERT -- arrumar ainda, antes de inserir, delete os que forem igauis cahve composta
 ON envio_equipamento
 FOR EACH ROW 
-BEGIN
+BEGIN   
+	UPDATE equipamento SET localizacao = NEW.fk_loja WHERE fk_num_serie = NEW.num_serie AND fk_loja = NEW.fk_loja;
 	SET SQL_SAFE_UPDATES = 0;
 	DELETE FROM envio_equipamento WHERE fk_num_serie = NEW.num_serie;
 	SET SQL_SAFE_UPDATES = 1; -- TESTE
