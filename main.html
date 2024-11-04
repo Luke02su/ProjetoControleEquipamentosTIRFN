@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial</title>
+</head>
+<style>
+
+    * {
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    header {
+        font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        background-color: green;
+        text-align: center;
+        color:white;
+        padding: 20px;
+        width: 100%;
+    }
+    nav {
+        background-color: green;
+        padding-top: 20px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        font-size: 14px;
+        height: 25px;
+        width: 100%;
+        font-weight:800;
+    } 
+
+    nav a {
+        color: white;
+        text-decoration: none;
+    }
+
+    nav a:hover {
+        font-weight: bolder;
+        font-size: 16px;
+    }
+
+    .header-nav {
+        background-color: green;
+        width: 100%;
+    }
+
+    main {
+        width: 100%;
+        background-color: whitesmoke;
+        height: 380px;
+        padding: 20px;
+    }
+
+    footer {
+        background-color: green;
+        width: 100%;;
+        height: 100px;
+        text-align: center;
+    }
+
+    .logout {
+        float: inline-start;
+        margin: 20px;
+        padding: 2px;
+        width: 150px;
+    }
+
+    .frase  {
+        float:inline-end;
+        margin-right: 20px;
+    }
+</style>
+<body>
+    <div class="header-nav">
+    <header>
+        <h1>Controle de Equipamentos de TI da RFN</h1>
+    </header>
+    <hr>
+    <nav>
+        <a href="#">Computadores</a>
+        <a href="#">Impressoras não fiscais</a>
+        <a href="#">Equipamentos genéricos</a>
+        <a href="#">Lojas</a>
+        <a href="#">Envios atuais</a>
+        <a href="#">Envios antigos</a>
+        <a href="#">Equipamentos descartados</a>
+    </nav>
+</div>
+    <main>
+        <h2>Instruções:</h2>
+    </main>
+    <footer>
+        <a href="#"><button class="logout">Sair</button></a>
+        <p class="frase">Desenvolvido pelo Auxiliar de TI Lucas Samuel Dias</p>
+    </footer>
+</body>
+</html>
