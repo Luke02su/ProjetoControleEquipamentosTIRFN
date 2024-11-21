@@ -323,7 +323,7 @@ CREATE TRIGGER trg_status_envio AFTER INSERT
 ON envio_equipamento	
 FOR EACH ROW 
 BEGIN
-	UPDATE equipamento SET NEW.envio = 'Sim' WHERE num_serie = NEW.num_serie;
+	UPDATE equipamento SET enviado = 'Sim' WHERE fk_num_serie = NEW.fk_num_serie;
 END&&
 DELIMITER ;
 
@@ -384,7 +384,7 @@ SELECT * FROM log_envios_descartados_equipamentos;
 CREATE TABLE usuarios (
 	id INT PRIMARY KEY AUTO_INCREMENT,
     nome_usuario VARCHAR(15) UNIQUE NOT NULL,
-    senha VARCHAR(15) NOT NULL,
+    senha CHAR(64) NOT NULL,
     data_criacao TIMESTAMP DEFAULT NOW()
 );
 
@@ -392,6 +392,8 @@ INSERT INTO usuarios (nome_usuario, senha)
 VALUES ('Lucas', SHA2('teste', 256));
 
 SELECT * FROM usuarios;
+
+select * from loja;
 
 /*DROP SCHEMA controle_equipamentos_ti; -- Caso seja necessário resetar o banco de dados apague-o.
 DROP USER auxiliar01_ti; -- Caso seja necessário excluir o usuário.
