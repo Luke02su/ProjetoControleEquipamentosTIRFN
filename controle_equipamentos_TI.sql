@@ -16,11 +16,11 @@ USE controle_equipamentos_ti; -- Utilizando o banco.
 
 -- Criação da tabela de equipamento, com a qual se relacionará a classe abstrata 'equipamento', em Java, ou seja, não poderá ser instanciada, servindo, desse como, como herança.
 CREATE TABLE equipamento (
-	 pk_num_serie VARCHAR (50) NOT NULL PRIMARY KEY,
+	 pk_num_serie VARCHAR (50) PRIMARY KEY,
      placa INT UNIQUE,
 	 tipo VARCHAR(30) NOT NULL,
      modelo VARCHAR(30) NOT NULL,
-     localizacao INT NOT NULL, -- Loja
+     origem INT NOT NULL, -- Loja
      enviado ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Não' -- Será implementado futuramente, em que, após o INSERT EM 'envio_equipamento', acionará uma TRIGGER que dará um UPDATE aqui.
 
 ) ENGINE=InnoDB; -- Engenharia padrão mais recente que possibilita maior segurança e otimização comparada ao MyISAM. 
@@ -33,8 +33,8 @@ CREATE TABLE computador (
     memoria VARCHAR(30) NOT NULL,
     windows VARCHAR(30) NOT NULL,
     armazenamento VARCHAR(30) NOT NULL,
-    formatacao VARCHAR(1) NOT NULL,
-    manutencao VARCHAR(1) NOT NULL,
+    formatacao ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim',
+    manutencao ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim',
     
     INDEX idx_fk_num_serie (fk_num_serie), -- Indexador que deixará a consulta mais otimizada ao utilizar a respectiva FOREIGN KEY.
     
@@ -45,7 +45,9 @@ CREATE TABLE computador (
 CREATE TABLE impressora (
 	fk_num_serie VARCHAR(50) NOT NULL,
 	pk_impressora INT AUTO_INCREMENT PRIMARY KEY,
-    revisao VARCHAR(1) NOT NULL,
+    revisao_recente ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim', -- Revisão recente antes de ir para loja x
+    data_revisao DATE NOT NULL,
+    observacao VARCHAR(60) NOT NULL,
     
     INDEX idx_fk_num_serie (fk_num_serie),
     
@@ -57,6 +59,7 @@ CREATE TABLE outros_equipamentos (
 	fk_num_serie VARCHAR(50) NOT NULL,
     pk_outros_equipamentos INT AUTO_INCREMENT PRIMARY KEY,
 	descricao VARCHAR(80) NOT NULL,
+    funciona ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim',
     
 	INDEX idx_fk_num_serie (fk_num_serie),
     
@@ -92,19 +95,19 @@ SHOW TABLES;
 
 -- Povoamento das tabelas de equipamento. Tais atributos da tabela serão herdadas, via FOREIGN KEY, para as tabelas computador, impressora e outros_equipamentos. (Em Java iso é visto mais facilmente.)
 START TRANSACTION; -- Iniciando a transação manualmente, sem dar auto-commit. (Ideal para um DBA.)
-INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao) VALUES
+INSERT equipamento (pk_num_serie, placa, tipo, modelo, origem) VALUES
 ('1', '1', 'Microcomputador', 'Dell Optiplex 3060', 44),
 ('2', '2', 'Microcomputador', 'Bematech RC-8400', 20),
 ('3', '3', 'Microcomputador', 'Dell Optiplex 3050', 999),
 ('4', '4', 'Desktop', 'Montada', 15),
 ('5', '5', 'Notebook', 'Inspiron 15', 1);
-INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao) VAlUES
+INSERT equipamento (pk_num_serie, placa, tipo, modelo, origem) VAlUES
 ('6', '6', 'Multifuncional a laser', 'HP M1132', 1),
 ('7', '7', 'Multifuncional a laser', 'Brother 2540', 2),
 ('8', '8', 'Fotográfica a jato de tinta', 'Epson L805', 33),
 ('9', '9', 'Multifuncional a laser', 'HP M125a', 43),
 ('10', '10', 'Impressora a laser', 'P1102', 24);
-INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao) VALUES
+INSERT equipamento (pk_num_serie, placa, tipo, modelo, origem) VALUES
 ('11', '11', 'Nobreak', 'SMS', 1),
 ('12', '12', 'Leitor de código de barras', 'Bematech', 1),
 ('13', '13', 'Monitor', 'AOC', 2),
@@ -113,27 +116,27 @@ INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao) VALUES
 
 -- Povoamento da  tabela de computador.
 INSERT INTO computador (fk_num_serie, pk_computador, processador, memoria, windows, armazenamento, formatacao, manutencao) VALUES
-(1, 130, 'i3 8100T', '8GB DDR4', '11 Pro', 'SSD 240GB', 'S', 'S'),
-(2, NULL, 'Celeron N5095', '4GB DDR4', '11 Pro', 'NvME 256GB', 'S', 'S'),
-(3, NULL, 'i3 6100T', '4GB DDR4', '11 Pro', 'HDD 500GB', 'S', 'N'),
-(4, NULL, 'Pentium E5300', '4GB DDR2', '10 Pro', 'HDD 500GB', 'S', 'S'),
-(5, NULL, 'i5 71000', '8GB DDR4', '11 Pro', 'SSD 256GB', 'S', 'N');
+(1, 130, 'i3 8100T', '8GB DDR4', '11 Pro', 'SSD 240GB', 'Sim', 'Sim'),
+(2, NULL, 'Celeron N5095', '4GB DDR4', '11 Pro', 'NvME 256GB', 'Sim', 'Sim'),
+(3, NULL, 'i3 6100T', '4GB DDR4', '11 Pro', 'HDD 500GB', 'Sim', 'Não'),
+(4, NULL, 'Pentium E5300', '4GB DDR2', '10 Pro', 'HDD 500GB', 'Sim', 'Sim'),
+(5, NULL, 'i5 71000', '8GB DDR4', '11 Pro', 'SSD 256GB', 'Sim', 'Não');
 
 -- Povoamento das tabela de impressora.
-INSERT INTO impressora (fk_num_serie, pk_impressora, revisao) VALUES
-(6, 35, 'S'),
-(7, NULL, 'S'),
-(8, NULL, 'S'),
-(9, NULL, 'S'),
-(10, NULL, 'N');
+INSERT INTO impressora (fk_num_serie, pk_impressora, revisao_recente, data_revisao, observacao) VALUES
+(6, 35, 'Sim', '2023-07-08', 'Troca de fusor.'),
+(7, NULL, 'Sim', '2023-10-2', 'Troca de película.'),
+(8, NULL, 'Sim', '2023-02-11', 'Troca de bucha.'),
+(9, NULL, 'Sim', '2023-10-02', 'Troca de fusor.'),
+(10, NULL, 'Não', '2023-08-19', 'Troca de borracha.');
 
 -- Povoamento das tabela de outros_equipamentos.
-INSERT INTO outros_equipamentos (fk_num_serie, pk_outros_equipamentos, descricao) VALUES
-(11, 203, '600 VA'),
-(12, NULL, 'Sem fio'),
-(13, NULL, '17 polegadas'),
-(14, NULL, 'Convertida'),
-(15, NULL, '600VA');
+INSERT INTO outros_equipamentos (fk_num_serie, pk_outros_equipamentos, descricao, funciona) VALUES
+(11, 203, '600 VA', 'Sim'),
+(12, NULL, 'Sem fio', 'Sim'),
+(13, NULL, '17 polegadas', 'Sim'),
+(14, NULL, 'Convertida', 'Sim'),
+(15, NULL, '600VA', 'Sim');
 
 -- Povoamento da tabela de loja.
 INSERT INTO loja (pk_loja, cnpj, gerente, cidade, telefone) VALUES 
@@ -149,7 +152,7 @@ INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VA
 (2, 2, '2024-08-02', 'Trocar máquina do gerente. A que voltar será destinada ao EFN.'),
 (3, 3, '2024-08-06', 'Substituir o computador do balcão que foi queimado.');
 INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
-(6, 1, '2024-06-20', 'Troca da impressora Brother 1617, engasgando papel).'),
+(6, 1, '2024-06-20', 'Troca da impressora Brother 1617, engasgando papel.'),
 (7, 3, '2024-07-02', 'Troca de impressora, não puxa papel.'),
 (8, 2, '2024-07-27', 'Troca de impressora, borrando papel.');
 INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
@@ -169,7 +172,7 @@ SELECT * FROM envio_equipamento;
 
 -- Criando uma VIEW detalhada, em que há os atributos modelo e tipo advindos de 'equipamento', para o envio de equipamento, que será usada para listar os dados de 'Outros_EquipamentosDAO', no Java.
 CREATE VIEW view_equipamento_envio_detalhado AS (
-	SELECT eq.fk_num_serie, e.tipo, e.modelo, e.localizacao, eq.fk_loja AS destino, l.gerente, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.observacao
+	SELECT eq.fk_num_serie, e.tipo, e.modelo, e.origem, eq.fk_loja AS destino, l.gerente, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.observacao
     FROM envio_equipamento eq
     INNER JOIN equipamento e
     ON eq.fk_num_serie = e.pk_num_serie
@@ -223,7 +226,7 @@ CREATE TABLE log_equipamentos_descartados (
     tipo VARCHAR (30) NOT NULL,
     modelo VARCHAR(30) NOT NULL,
     motivo VARCHAR(30) NOT NULL,
-    localizacao VARCHAR(30) NOT NULL,
+    origem VARCHAR(30) NOT NULL,
 	data DATE NOT NULL,
     usuario VARCHAR(25) NOT NULL,
     
@@ -311,12 +314,16 @@ CREATE TRIGGER trg_envio_update_delete BEFORE INSERT -- arrumar ainda, antes de 
 ON envio_equipamento
 FOR EACH ROW 
 BEGIN   
-	UPDATE equipamento SET localizacao = NEW.fk_loja WHERE pk_num_serie = NEW.fk_num_serie AND fk_loja = NEW.fk_loja;
+	UPDATE equipamento SET origem = NEW.fk_loja WHERE pk_num_serie = NEW.fk_num_serie AND fk_loja = NEW.fk_loja;
 	SET SQL_SAFE_UPDATES = 0;
 	DELETE FROM envio_equipamento WHERE fk_num_serie = NEW.fk_num_serie;
 	SET SQL_SAFE_UPDATES = 1; -- TESTE
 END&&
 DELIMITER ;
+
+drop trigger  trg_envio_update_delete;
+
+select * from log_envios_descartados_equipamentos;
 
 DELIMITER &&
 CREATE TRIGGER trg_status_envio AFTER INSERT
@@ -391,10 +398,13 @@ CREATE TABLE usuarios (
 INSERT INTO usuarios (nome_usuario, senha) 
 VALUES ('Lucas', SHA2('teste', 256));
 
-SELECT * FROM usuarios;
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
+(1, 3, '2024-08-01', 'BIOS atualizada para tentar corrigir reinício repentino da máquina.');
 
 select * from loja;
+describe envio_equipamento;
 
 /*DROP SCHEMA controle_equipamentos_ti; -- Caso seja necessário resetar o banco de dados apague-o.
 DROP USER auxiliar01_ti; -- Caso seja necessário excluir o usuário.
 DROP ROLE aux_ti; -- Caso seja necessário excluir o papel atribuído ao usuário.
+
