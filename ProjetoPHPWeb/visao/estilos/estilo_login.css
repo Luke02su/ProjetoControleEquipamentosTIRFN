@@ -1,0 +1,82 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-image: linear-gradient(135deg, rgb(100, 255, 120), rgb(0, 200, 0)); /* Gradiente que clareia */
+    background-size: cover; /* Ajusta ao tamanho da tela */
+    background-repeat: no-repeat; /* Não repete */
+    height: 1920px;
+    height: 600px;
+    overflow: hidden;
+}
+
+.titulo {
+    margin-top:160px;
+    padding-top: 20px;
+    text-align: center;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    text-shadow: 0.5px 0.5px 0.5px rgba(0, 0, 0, 0.3); /* Adicionando sombra ao texto */
+}
+
+article {
+    margin:auto;
+    background-color: white;
+    border-radius: 40px;
+    width: 550px;
+    height: 300px;
+}
+
+#logo img {
+    width: 100px;
+    margin-bottom: 30px;
+    transition: transform 0.4s ease-in-out;
+}
+
+#logo img:hover {
+    transform: scale(1.2);
+    opacity: 80%;
+}
+
+aside {
+    margin-top: 50px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.label-input {
+    margin-bottom: 20px;
+    margin-left: 30px;
+}
+
+input {
+    float: inline-end;
+    border-radius: 10px;
+    border-color: red;
+    padding: 5px;
+}
+
+.botao-envio input {
+    text-align: center;
+    background: rgb(13, 175, 13);
+    border-radius: 10px;
+    border-color: black;
+    width: 250px;
+    margin-left: 40px;
+    color: white;
+}
+
+.botao-envio:hover input {
+    font-weight: bold;
+}
+
+#mensagemErro {
+    text-align: center;
+    margin-bottom: -30px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    color: red;
+    font-size: 12px;
+}
