@@ -2,9 +2,10 @@
 session_start();
 include_once('./cabecalho_loja.html');
 include_once("../modelo/LojaDAO_class.php");
+include_once("../controle/ListarLoja_class.php");
 
-$dao = new LojaDAO();
-$lista = $dao->listar();
+$listar = new ListarLoja();
+$lista = $listar->getLista();
 ?>
 
 <!DOCTYPE html>

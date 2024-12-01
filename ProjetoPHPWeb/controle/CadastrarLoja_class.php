@@ -1,6 +1,6 @@
 <?php
 // CadastrarLoja.php
-include_once($_SERVER['DOCUMENT_ROOT']."/ProjetoPHPWeb/modelo/LojaDAO_class.php");
+include_once("../modelo/LojaDAO_class.php");
 
 class CadastrarLoja {
     public function __construct() {

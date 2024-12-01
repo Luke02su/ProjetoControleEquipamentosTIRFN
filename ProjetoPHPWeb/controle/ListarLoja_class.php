@@ -1,24 +1,17 @@
 <?php
-    include_once("../modelo/LojaDAO_class.php");
+include_once("../modelo/LojaDAO_class.php");
 
-    class ListarLoja {
+class ListarLoja {
+    private $lista;
 
-        public function __construct() {
-            echo "Iniciando ListarLoja...<br>";
-    
-            $dao = new LojaDAO();
-            echo "Criando instância de LojaDAO...<br>";
-    
-            $lista = $dao->listar();  // Obtém a lista de lojas
-            echo "Consulta executada, verificando resultados...<br>";
-    
-            // Verifica se a lista não está vazia
-            if (empty($lista)) {
-                echo "Nenhuma loja cadastrada.";  // Exibe mensagem caso não haja lojas
-            } else {
-                echo "Lojas encontradas, carregando visão...<br>";
-                include_once("../visao/lista_loja.php");
-            }
-        }
+    public function __construct() {
+        $dao = new LojaDAO();
+        $this->lista = $dao->listar(); // Armazena a lista de lojas internamente
     }
+
+    // Método público para obter a lista
+    public function getLista() {
+        return $this->lista;
+    }
+}
 ?>

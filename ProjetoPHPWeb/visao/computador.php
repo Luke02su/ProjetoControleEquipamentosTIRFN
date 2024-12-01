@@ -23,6 +23,7 @@
             <b>Excluir loja:</b> Exclui todos os dados de uma loja específica.
             Ideal para quando se insere dados completamente errados e deseja excluí-los. E quase nunca será usado, pois se tem o atualizar.
             <p>
+            <a href="./inserir_comparar_cpu.php">Comparar CPU</a>
         </div>
 <?php
     include_once ('./rodape.html');

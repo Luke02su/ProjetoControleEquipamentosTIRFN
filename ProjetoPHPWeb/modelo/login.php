@@ -6,7 +6,7 @@ if (isset($_POST['usuario']) && isset($_POST['senha'])) {
     $senha = $_POST['senha'];
 
     // Importa o arquivo de conexão e o hash de senha
-    require_once('./ConnectionFactory_class.php');
+    include_once('./ConnectionFactory_class.php');
     require_once('./SenhaSha2.php');
 
     try {

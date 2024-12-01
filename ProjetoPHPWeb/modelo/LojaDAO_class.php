@@ -1,7 +1,7 @@
 <?php
 // LojaDAO_class.php
-include_once($_SERVER['DOCUMENT_ROOT'] . "/ProjetoPHPWeb/modelo/ConnectionFactory_class.php");
-include_once($_SERVER['DOCUMENT_ROOT'] . "/ProjetoPHPWeb/modelo/Loja_class.php");
+include_once("../modelo/ConnectionFactory_class.php");
+include_once("../modelo/Loja_class.php");
 
 class LojaDAO {
     public $con = null;

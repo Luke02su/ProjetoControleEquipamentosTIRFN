@@ -28,7 +28,7 @@ if (!$loja) {
 <form action="../controle/AlterarLoja_class.php" method="POST">
 
     <label for="pk_loja">Código da Loja:</label>
-    <input type="text" id="pk_loja" name="pk_loja" value="<?php echo htmlspecialchars($loja->getPk_loja()); ?>" readonly ><br>
+    <input type="text" id="pk_loja" name="pk_loja" value="<?php echo htmlspecialchars($loja->getPk_loja()); ?>" ><br>
 
     <label for="cnpj">CNPJ:</label>
     <input type="text" id="cnpj" name="cnpj" value="<?php echo htmlspecialchars($loja->getCnpj()); ?>" required placeholder="Digite o CNPJ com máscara..."><br>
@@ -42,7 +42,7 @@ if (!$loja) {
     <label for="telefone">Telefone:</label>
     <input type="text" id="telefone" name="telefone" value="<?php echo htmlspecialchars($loja->getTelefone()); ?>" required placeholder="Digite o telefone com DDD..."><br>
 
-    <button type="submit" name="enviar">Atualizar</button>
+    <button type="submit" name="atualizar">Atualizar</button>
     <button type="reset" name="limpar">Limpar</button>
 
     <?php
