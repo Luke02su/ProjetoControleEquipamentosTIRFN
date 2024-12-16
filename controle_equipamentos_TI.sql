@@ -20,8 +20,8 @@ CREATE TABLE equipamento (
      placa INT UNIQUE,
 	 tipo VARCHAR(30) NOT NULL,
      modelo VARCHAR(30) NOT NULL,
-     origem INT NOT NULL, -- Loja
-     enviado ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Não' -- Será implementado futuramente, em que, após o INSERT EM 'envio_equipamento', acionará uma TRIGGER que dará um UPDATE aqui.
+     localizacao_atual INT NOT NULL, -- Loja
+     enviado ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Não' -- Após INSERT EM 'envio_equipamento', acionará uma TRIGGER que dará um UPDATE aqui.
 
 ) ENGINE=InnoDB; -- Engenharia padrão mais recente que possibilita maior segurança e otimização comparada ao MyISAM. 
 
@@ -33,8 +33,8 @@ CREATE TABLE computador (
     memoria VARCHAR(30) NOT NULL,
     windows VARCHAR(30) NOT NULL,
     armazenamento VARCHAR(30) NOT NULL,
-    formatacao ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim',
-    manutencao ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim',
+    formatacao VARCHAR(30) NOT NULL, -- Ideal se passar data
+    manutencao VARCHAR(30) NOT NULL, -- Ideal se passar data
     
     INDEX idx_fk_num_serie (fk_num_serie), -- Indexador que deixará a consulta mais otimizada ao utilizar a respectiva FOREIGN KEY.
     
@@ -47,7 +47,7 @@ CREATE TABLE impressora (
 	pk_impressora INT AUTO_INCREMENT PRIMARY KEY,
     revisao_recente ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim', -- Revisão recente antes de ir para loja x
     data_revisao DATE NOT NULL,
-    observacao VARCHAR(60) NOT NULL,
+    motivo_revisao VARCHAR(60) NOT NULL,
     
     INDEX idx_fk_num_serie (fk_num_serie),
     
@@ -58,8 +58,7 @@ CREATE TABLE impressora (
 CREATE TABLE outros_equipamentos (
 	fk_num_serie VARCHAR(50) NOT NULL,
     pk_outros_equipamentos INT AUTO_INCREMENT PRIMARY KEY,
-	descricao VARCHAR(80) NOT NULL,
-    funciona ENUM ('Não', 'Sim') NOT NULL DEFAULT 'Sim',
+	descricao VARCHAR(80) NOT NULL, -- Passa-se um complemento de informações
     
 	INDEX idx_fk_num_serie (fk_num_serie),
     
@@ -77,17 +76,18 @@ CREATE TABLE loja (
 
 -- Criação da tabela de computador, sobre a qual se relacionará a classe 'EnvioEquipamento', em Java, instanciada.
 CREATE TABLE envio_equipamento (
+	pk_envio INT AUTO_INCREMENT PRIMARY KEY,
 	fk_num_serie VARCHAR(50) NOT NULL,
     fk_loja INT NOT NULL,
+    motivo TEXT NOT NULL,
     data_envio DATE NOT NULL,
-    observacao TEXT NOT NULL,
     
 	INDEX idx_fk_num_serie (fk_num_serie),
 	INDEX idx_fk_loja (fk_loja),
     
 	CONSTRAINT fk_num_serie_envio FOREIGN KEY (fk_num_serie) REFERENCES equipamento(pk_num_serie) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_loja_envio FOREIGN KEY (fk_loja) REFERENCES loja(pk_loja) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT pk_envio PRIMARY KEY (fk_num_serie, fk_loja)
+    CONSTRAINT fk_loja_envio FOREIGN KEY (fk_loja) REFERENCES loja(pk_loja) ON DELETE CASCADE ON UPDATE CASCADE
+    -- CONSTRAINT pk_envio PRIMARY KEY (fk_num_serie, fk_loja)
 ) ENGINE=InnoDB;
 
 -- Mostrando as tabelas do banco controle_equipamentos_TI.
@@ -95,19 +95,19 @@ SHOW TABLES;
 
 -- Povoamento das tabelas de equipamento. Tais atributos da tabela serão herdadas, via FOREIGN KEY, para as tabelas computador, impressora e outros_equipamentos. (Em Java iso é visto mais facilmente.)
 START TRANSACTION; -- Iniciando a transação manualmente, sem dar auto-commit. (Ideal para um DBA.)
-INSERT equipamento (pk_num_serie, placa, tipo, modelo, origem) VALUES
+INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao_atual) VALUES
 ('1', '1', 'Microcomputador', 'Dell Optiplex 3060', 44),
 ('2', '2', 'Microcomputador', 'Bematech RC-8400', 20),
 ('3', '3', 'Microcomputador', 'Dell Optiplex 3050', 999),
 ('4', '4', 'Desktop', 'Montada', 15),
 ('5', '5', 'Notebook', 'Inspiron 15', 1);
-INSERT equipamento (pk_num_serie, placa, tipo, modelo, origem) VAlUES
+INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao_atual) VAlUES
 ('6', '6', 'Multifuncional a laser', 'HP M1132', 1),
 ('7', '7', 'Multifuncional a laser', 'Brother 2540', 2),
 ('8', '8', 'Fotográfica a jato de tinta', 'Epson L805', 33),
 ('9', '9', 'Multifuncional a laser', 'HP M125a', 43),
 ('10', '10', 'Impressora a laser', 'P1102', 24);
-INSERT equipamento (pk_num_serie, placa, tipo, modelo, origem) VALUES
+INSERT equipamento (pk_num_serie, placa, tipo, modelo, localizacao_atual) VALUES
 ('11', '11', 'Nobreak', 'SMS', 1),
 ('12', '12', 'Leitor de código de barras', 'Bematech', 1),
 ('13', '13', 'Monitor', 'AOC', 2),
@@ -123,7 +123,7 @@ INSERT INTO computador (fk_num_serie, pk_computador, processador, memoria, windo
 (5, NULL, 'i5 71000', '8GB DDR4', '11 Pro', 'SSD 256GB', 'Sim', 'Não');
 
 -- Povoamento das tabela de impressora.
-INSERT INTO impressora (fk_num_serie, pk_impressora, revisao_recente, data_revisao, observacao) VALUES
+INSERT INTO impressora (fk_num_serie, pk_impressora, revisao_recente, data_revisao, motivo_revisao) VALUES
 (6, 35, 'Sim', '2023-07-08', 'Troca de fusor.'),
 (7, NULL, 'Sim', '2023-10-2', 'Troca de película.'),
 (8, NULL, 'Sim', '2023-02-11', 'Troca de bucha.'),
@@ -131,12 +131,12 @@ INSERT INTO impressora (fk_num_serie, pk_impressora, revisao_recente, data_revis
 (10, NULL, 'Não', '2023-08-19', 'Troca de borracha.');
 
 -- Povoamento das tabela de outros_equipamentos.
-INSERT INTO outros_equipamentos (fk_num_serie, pk_outros_equipamentos, descricao, funciona) VALUES
-(11, 203, '600 VA', 'Sim'),
-(12, NULL, 'Sem fio', 'Sim'),
-(13, NULL, '17 polegadas', 'Sim'),
-(14, NULL, 'Convertida', 'Sim'),
-(15, NULL, '600VA', 'Sim');
+INSERT INTO outros_equipamentos (fk_num_serie, pk_outros_equipamentos, descricao) VALUES
+(11, 203, '600 VA'),
+(12, NULL, 'Sem fio'),
+(13, NULL, '17 polegadas'),
+(14, NULL, 'Convertida'),
+(15, NULL, '600VA');
 
 -- Povoamento da tabela de loja.
 INSERT INTO loja (pk_loja, cnpj, gerente, cidade, telefone) VALUES 
@@ -147,15 +147,15 @@ INSERT INTO loja (pk_loja, cnpj, gerente, cidade, telefone) VALUES
 (NULL, '22.222.998/023-21', 'Raquel', 'Araxá', '(34) 9 8293-0287');
 
 -- Povoamento da tabela envio_equipamento, correlacionando com equipamento e loja de forma agregativa. (Em Java isso é visto como associação de agregação.)
-INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, motivo) VALUES
 (1, 1, '2024-08-01', 'BIOS atualizada para tentar corrigir reinício repentino da máquina.'),
 (2, 2, '2024-08-02', 'Trocar máquina do gerente. A que voltar será destinada ao EFN.'),
 (3, 3, '2024-08-06', 'Substituir o computador do balcão que foi queimado.');
-INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, motivo) VALUES
 (6, 1, '2024-06-20', 'Troca da impressora Brother 1617, engasgando papel.'),
 (7, 3, '2024-07-02', 'Troca de impressora, não puxa papel.'),
 (8, 2, '2024-07-27', 'Troca de impressora, borrando papel.');
-INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, motivo) VALUES
 (11, 3, '2024-06-14', 'Troca de nobreak queimado.'),
 (12, 2, '2024-07-01', 'Faltando leitor s/ fio na loja'),
 (13, 1, '2024-07-20', 'Troca de monitor de 15 polegadas.');
@@ -172,7 +172,7 @@ SELECT * FROM envio_equipamento;
 
 -- Criando uma VIEW detalhada, em que há os atributos modelo e tipo advindos de 'equipamento', para o envio de equipamento, que será usada para listar os dados de 'Outros_EquipamentosDAO', no Java.
 CREATE VIEW view_equipamento_envio_detalhado AS (
-	SELECT eq.fk_num_serie, e.tipo, e.modelo, e.origem, eq.fk_loja AS destino, l.gerente, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.observacao
+	SELECT eq.fk_num_serie, e.tipo, e.modelo, e.localizacao_atual, eq.fk_loja AS destino, l.gerente, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.motivo
     FROM envio_equipamento eq
     INNER JOIN equipamento e
     ON eq.fk_num_serie = e.pk_num_serie
@@ -226,7 +226,7 @@ CREATE TABLE log_equipamentos_descartados (
     tipo VARCHAR (30) NOT NULL,
     modelo VARCHAR(30) NOT NULL,
     motivo VARCHAR(30) NOT NULL,
-    origem VARCHAR(30) NOT NULL,
+    ultima_localizacao VARCHAR(30) NOT NULL,
 	data DATE NOT NULL,
     usuario VARCHAR(25) NOT NULL,
     
@@ -234,8 +234,9 @@ CREATE TABLE log_equipamentos_descartados (
 )ENGINE=InnoDB;
 
 -- Criando tabela de LOG para envios descartados de equipamento após o acionamento da TRIGGER 'trg_descarte_envio'
-CREATE TABLE log_envios_descartados_equipamentos (
-	fk_num_serie VARCHAR(100) PRIMARY KEY, -- Como a intenção que envio de um equipamento X para uma loja X possa ser descartado mais de uma vez, criou-se uma própria PRIMARY KEY que possibilita isso.
+CREATE TABLE log_envios_antigos_equipamentos (
+	pk_envio_antigo INT AUTO_INCREMENT PRIMARY KEY,
+    fk_num_serie VARCHAR(100) NOT NULL, -- Como a intenção que envio de um equipamento X para uma loja X possa ser descartado mais de uma vez, criou-se uma própria PRIMARY KEY que possibilita isso.
     fk_loja INT NOT NULL,
     motivo VARCHAR(30) NOT NULL,
 	data DATE NOT NULL,
@@ -284,7 +285,7 @@ GRANT SELECT
 ON controle_equipamentos_ti.log_equipamentos_descartados
 TO aux_ti;
 GRANT SELECT
-ON controle_equipamentos_ti.log_envios_descartados_equipamentos
+ON controle_equipamentos_ti.log_envios_antigos_equipamentos
 TO aux_ti;
 GRANT SELECT
 ON controle_equipamentos_ti.view_equipamento_envio_detalhado
@@ -310,46 +311,48 @@ SHOW GRANTS FOR 'auxiliar01_ti'@'%';
 e saber os descarte de envios de equipamentos, que se refere a: caso um equipamento seja devolvido de uma loja X, o usuário deverá deletar o envio de equipamento, esse dado será armazenado na tabela de log para isso.
 Em outras palavras, na tabela de envio de equipamentos importa-se somente o último envio dela, mas é importante saber os outros possíveis envios anteriores para outras lojas, ou até mesmo para a própria loja.*/
 DELIMITER &&
-CREATE TRIGGER trg_envio_update_delete BEFORE INSERT -- arrumar ainda, antes de inserir, delete os que forem igauis cahve composta
+CREATE TRIGGER trg_envio_update_localizacao_atual_enviado BEFORE INSERT -- arrumar ainda, antes de inserir, delete os que forem iguais chave composta
 ON envio_equipamento
 FOR EACH ROW 
-BEGIN   
-	UPDATE equipamento SET origem = NEW.fk_loja WHERE pk_num_serie = NEW.fk_num_serie AND fk_loja = NEW.fk_loja;
-	SET SQL_SAFE_UPDATES = 0;
-	DELETE FROM envio_equipamento WHERE fk_num_serie = NEW.fk_num_serie;
-	SET SQL_SAFE_UPDATES = 1; -- TESTE
+BEGIN
+	CALL proc_deletar_envio_equipamento_duplicado(NEW.pk_envio, NEW.fk_num_serie);
+	UPDATE equipamento SET localizacao_atual = NEW.fk_loja WHERE pk_num_serie = NEW.fk_num_serie;
+    UPDATE equipamento SET enviado = 'Sim' WHERE pk_num_serie = NEW.fk_num_serie;
 END&&
 DELIMITER ;
 
-drop trigger  trg_envio_update_delete;
-
-select * from log_envios_descartados_equipamentos;
-
-DELIMITER &&
+/*DELIMITER &&
 CREATE TRIGGER trg_status_envio AFTER INSERT
 ON envio_equipamento	
 FOR EACH ROW 
 BEGIN
 	UPDATE equipamento SET enviado = 'Sim' WHERE fk_num_serie = NEW.fk_num_serie;
 END&&
-DELIMITER ;
+DELIMITER ;*/
 
 DELIMITER &&
 CREATE TRIGGER trg_descarte_equipamento BEFORE DELETE
 ON equipamento
 FOR EACH ROW 
 BEGIN
-	INSERT INTO log_equipamentos_descartados (fk_num_serie, tipo, modelo, motivo, data, usuario) VALUES (OLD.pk_num_serie, OLD.tipo, OLD.modelo, 'Velho ou estragado', NOW(), USER());
+	INSERT INTO log_equipamentos_descartados (fk_num_serie, tipo, modelo, motivo, ultima_localizacao, data, usuario) VALUES (OLD.pk_num_serie, OLD.tipo, OLD.modelo, 'Velho ou estragado', OLD.localizacao_atual, NOW(), USER());
 END&&
 DELIMITER ;
 
 DELIMITER &&
-CREATE TRIGGER trg_descarte_envio BEFORE DELETE -- MUDAR TRIGGER PARA INSERIR 
+CREATE TRIGGER trg_envio_antigo BEFORE INSERT -- MUDAR TRIGGER PARA INSERIR 
 ON envio_equipamento
 FOR EACH ROW
 BEGIN
-	INSERT INTO log_envios_descartados_equipamentos (pk_descarte, fk_num_serie, fk_loja, motivo, data, usuario) VALUES (NULL, OLD.fk_num_serie, OLD.fk_loja, 'Equipamento devolvido', NOW(), USER());
+	INSERT INTO log_envios_antigos_equipamentos (fk_num_serie, fk_loja, motivo, data, usuario) VALUES (OLD.fk_num_serie, OLD.fk_loja, 'Equipamento devolvido', NOW(), USER());
 END&&
+DELIMITER ;
+
+DELIMITER %%
+CREATE PROCEDURE proc_deletar_envio_equipamento_duplicado (IN trg_pk_envio INT, IN trg_fk_num_serie VARCHAR(30))
+BEGIN
+	DELETE FROM envio_equipamento WHERE pk_envio != trg_pk_envio AND fk_num_serie = trg_fk_num_serie;
+END%%
 DELIMITER ;
 
 -- Criação de PROCEDURE a fim de automatizar o processo, via banco, de DELETE de um determinado equipamento. (Ideal fazer pelo Java.)
@@ -386,7 +389,7 @@ CALL proc_deletar_envio_equipamento(1, 1);
 
 -- Selecionando os atributos da tabela 'log_equipamentos_descartados' e 'log_envios_equipamentos_descartados'.
 SELECT * FROM log_equipamentos_descartados;
-SELECT * FROM log_envios_descartados_equipamentos;
+SELECT * FROM log_envios_antigos_equipamentos;
 
 CREATE TABLE usuarios (
 	id INT PRIMARY KEY AUTO_INCREMENT,
@@ -398,13 +401,13 @@ CREATE TABLE usuarios (
 INSERT INTO usuarios (nome_usuario, senha) 
 VALUES ('Lucas', SHA2('teste', 256));
 
-INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, observacao) VALUES
-(1, 3, '2024-08-01', 'BIOS atualizada para tentar corrigir reinício repentino da máquina.');
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, motivo) VALUES
+(2, 2, '2024-08-01', 'BIOS atualizada para tentar corrigir reinício repentino da máquina.');
 
-select * from loja;
-describe envio_equipamento;
+select * from envio_equipamento;
+
+select * from equipamento;
 
 /*DROP SCHEMA controle_equipamentos_ti; -- Caso seja necessário resetar o banco de dados apague-o.
 DROP USER auxiliar01_ti; -- Caso seja necessário excluir o usuário.
 DROP ROLE aux_ti; -- Caso seja necessário excluir o papel atribuído ao usuário.
-
