@@ -78,10 +78,10 @@ CREATE TABLE loja (
 CREATE TABLE envio_equipamento (
 	pk_envio INT AUTO_INCREMENT PRIMARY KEY,
 	fk_num_serie VARCHAR(50) NOT NULL,
+    origem INT,
     fk_loja INT NOT NULL,
-    origem INT NOT NULL,
     motivo TEXT NOT NULL,
-    data_envio DATE DEFAULT NOW(),
+    data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
     
 	INDEX idx_fk_num_serie (fk_num_serie),
 	INDEX idx_fk_loja (fk_loja),
@@ -173,7 +173,7 @@ SELECT * FROM envio_equipamento;
 
 -- Criando uma VIEW detalhada, em que há os atributos modelo e tipo advindos de 'equipamento', para o envio de equipamento, que será usada para listar os dados de 'Outros_EquipamentosDAO', no Java.
 CREATE VIEW view_equipamento_envio_detalhado AS (
-	SELECT eq.fk_num_serie, e.tipo, e.modelo, e.localizacao_atual AS origem_loja, eq.fk_loja AS destino_loja, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.motivo
+	SELECT eq.fk_num_serie, e.tipo, e.modelo, eq.origem AS origem_loja, eq.fk_loja AS destino_loja, DATE_FORMAT(eq.data_envio, "%d/%m/%Y") AS data_envio,  eq.motivo
     FROM envio_equipamento eq
     INNER JOIN equipamento e
     ON eq.fk_num_serie = e.pk_num_serie
@@ -204,7 +204,7 @@ CREATE VIEW view_impressora_enviada_nao_enviada AS ( -- Após criar, futuramente
 );
 
 -- Criando uma VIEW para o envio equipamentos_genericos, na qual pode-se ver os que não foram enviados.
-CREATE VIEW view_equip_generic__nao_enviado AS ( -- Após criar, futuramente, a TRIGGER de envio para alterar o status de equipamento, tal VIEW se torna desnecessária para ver quais outros equipamentos foram enviados, podendo torná-la mais simplificada.
+CREATE VIEW view_equipamento_generico_nao_enviado AS ( -- Após criar, futuramente, a TRIGGER de envio para alterar o status de equipamento, tal VIEW se torna desnecessária para ver quais outros equipamentos foram enviados, podendo torná-la mais simplificada.
 	SELECT eg.pk_equipamento_generico AS id_outros, e.modelo
     FROM equipamento e
     INNER JOIN equipamento_generico eg
@@ -218,7 +218,11 @@ CREATE VIEW view_equip_generic__nao_enviado AS ( -- Após criar, futuramente, a 
 SELECT * FROM view_equipamento_envio_detalhado;
 SELECT * FROM view_computador_enviado_nao_enviado;
 SELECT * FROM view_impressora_enviada_nao_enviada;
-SELECT * FROM view_outros_equip_enviado_nao_enviado;
+SELECT * FROM view_equipamento_generico_nao_enviado;
+
+describe loja;
+
+describe envio_equipamento;
 
 -- Criando tabela de LOG para equipamentos descartados após o acionamento da TRIGGER 'trg_descarte_equipamento'
 -- Importante ressaltar que não foi utilizada CONSTRAINTS neste LOG em razão de não haver necessidade, além de estar havendo erro, pois tais dados já foram excluídos da TABLE referenciada após o acionamento de sua TRIGGER.
@@ -316,28 +320,16 @@ CREATE TRIGGER trg_envio_update_localizacao_atual_enviado BEFORE INSERT -- arrum
 ON envio_equipamento
 FOR EACH ROW 
 BEGIN
-	-- CALL proc_deletar_envio_equipamento_duplicado(NEW.pk_envio, NEW.fk_num_serie);
-    UPDATE envio_equipamento 
-    SET origem = (SELECT localizacao_atual 
-                  FROM equipamento 
-                  WHERE pk_num_serie = NEW.fk_num_serie)
-    WHERE fk_num_serie = NEW.fk_num_serie;
+    SET NEW.origem = (SELECT localizacao_atual FROM equipamento WHERE pk_num_serie = NEW.fk_num_serie);
     
 	UPDATE equipamento SET localizacao_atual = NEW.fk_loja WHERE pk_num_serie = NEW.fk_num_serie;
     
     UPDATE equipamento SET enviado = 'Sim' WHERE pk_num_serie = NEW.fk_num_serie;
+    
+	-- DELETE FROM envio_equipamento WHERE fk_num_serie = NEW.fk_num_serie;
 END&&
 DELIMITER ;
-
-/*DELIMITER &&
-CREATE TRIGGER trg_status_envio AFTER INSERT
-ON envio_equipamento	
-FOR EACH ROW 
-BEGIN
-	UPDATE equipamento SET enviado = 'Sim' WHERE fk_num_serie = NEW.fk_num_serie;
-END&&
-DELIMITER ;*/
-
+    
 DELIMITER &&
 CREATE TRIGGER trg_descarte_equipamento BEFORE DELETE
 ON equipamento
@@ -348,7 +340,7 @@ END&&
 DELIMITER ;
 
 DELIMITER &&
-CREATE TRIGGER trg_envio_antigo BEFORE INSERT -- MUDAR TRIGGER PARA INSERIR 
+CREATE TRIGGER trg_envio_antigo BEFORE DELETE -- MUDAR TRIGGER PARA INSERIR 
 ON envio_equipamento
 FOR EACH ROW
 BEGIN
@@ -393,7 +385,7 @@ FLUSH PRIVILEGES;
 
 -- Chamando a PROCEDURE e passando o respectivo valor referente ao ID da tabela 'equipamento'; já na segunda, além desse, passa-se também o de 'loja'.
 CALL proc_deletar_equipamento(9);
-CALL proc_deletar_envio_equipamento(1, 1);
+CALL proc_deletar_envio_equipamento(2, 2);
 
 -- Selecionando os atributos da tabela 'log_equipamentos_descartados' e 'log_envios_equipamentos_descartados'.
 SELECT * FROM log_equipamentos_descartados;
@@ -437,8 +429,19 @@ SELECT * FROM view_equipamento_computador;
 SELECT * FROM view_equipamento_impressora;
 SELECT * FROM view_equipamento_equipamento_generico;
 
-INSERT INTO envio_equipamento (fk_num_serie, fk_loja, data_envio, motivo) VALUES
-(2, 2, '2024-08-01', 'BIOS atualizada para tentar corrigir reinício repentino da máquina.');
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, motivo) VALUES
+(2, 2, 'BIOS atualizada para tentar corrigir reinício repentino da máquina.');
+
+INSERT INTO envio_equipamento (fk_num_serie, fk_loja, motivo) VALUES
+(2, 3, 'BIOS atualizada para tentar corrigir reinício repentino da máquina.');
+
+SELECT * FROM log_envios_antigos_equipamentos;
+SELECT * FROM envio_equipamento;
+SELECT * FROM equipamento;
+SELECT * FROm loja;
+SELECT * FROM usuarios;
+
+SELECT * FROM view_equipamento_envio_detalhado WHERE (SELECT MAX(pk_envio) FROM envio_equipamento);
 
 /*DROP SCHEMA controle_equipamentos_ti; -- Caso seja necessário resetar o banco de dados apague-o.
 DROP USER auxiliar01_ti; -- Caso seja necessário excluir o usuário.
